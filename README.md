@@ -1,7 +1,7 @@
 
 ###Usage
 
-`
+```
 var dart = require('dart2js-gulp');
 
 gulp.task('dart', function() {
@@ -9,10 +9,10 @@ gulp.task('dart', function() {
     .pipe(coffee())
     .pipe(gulp.dest('./public'))
 });
-`
+```
 
 ####options
-`
+```
 //check === checked dart2js compiler option.
 
 //default
@@ -20,7 +20,7 @@ dart({
   check: false,
   minify: false
 })
-`
+```
 
 
 ###The MIT License (MIT)
