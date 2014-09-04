@@ -2,3 +2,5 @@
 build
 *.node
 components
+compiled
+.dump

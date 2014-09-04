@@ -1,7 +1,6 @@
 //jasmine-node test.spec.js
 
-var gulp = require('gulp'),
-    fs = require('fs'),
+var fs = require('fs'),
     path = require('path'),
     gutil = require('gulp-util'),
     _ = require('lodash');
