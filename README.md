@@ -1,6 +1,31 @@
+
+###Usage
+
+`
+var dart = require('dart2js-gulp');
+
+gulp.task('dart', function() {
+  gulp.src('./src/*.dart')
+    .pipe(coffee())
+    .pipe(gulp.dest('./public'))
+});
+`
+
+####options
+`
+//check === checked dart2js compiler option.
+
+//default
+dart({
+  check: false,
+  minify: false
+})
+`
+
+
 ###The MIT License (MIT)
 
-Copyright (c) 2014 TsutomuNakazima<tsutomunakazima@live.jp>
+Copyright (c) 2014 TsutomuNakazima(tsutomunakazima@live.jp)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
