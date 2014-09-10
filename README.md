@@ -6,7 +6,7 @@ var dart = require('dart2js-gulp');
 
 gulp.task('dart', function() {
   gulp.src('./src/*.dart')
-    .pipe(coffee())
+    .pipe(dart())
     .pipe(gulp.dest('./public'))
 });
 ```
