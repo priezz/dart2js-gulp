@@ -1,3 +1,5 @@
+Dart2js Command Line Tool Wrapper for gulp. 
+If you want to use source-map when use output option.
 
 ###Usage
 
@@ -21,7 +23,14 @@ dart({
   minify: false
 })
 ```
-
+###chnage log
+######(future) transfom other dependency .
+######0.0.5: fix error handring.
+######0.0.5: Insert output option.
+			 => Changed source file output approach. 
+			(I tried to faster. but I don't understand. What exactly dart2js doing.)
+######0.0.4: This is first usable commit.
+			(sorry.)
 
 ###The MIT License (MIT)
 

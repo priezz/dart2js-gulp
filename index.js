@@ -1,97 +1,115 @@
 // options 
+// output : '.dump/out.js'
 // check : false,
 // minify : false
 
 //require
-var _ = require('lodash'),
-    through = require('through2'),
-    gutil = require('gulp-util'),
-    PluginError = gutil.PluginError;
-var fs = require('fs'),
-    path = require('path'),
-    exec = require('child_process').exec; //execFile fork
+var _ = require('lodash');
+var through = require('through2');
+var gutil = require('gulp-util');
+var mkdirp = require('mkdirp');
+var PluginError = gutil.PluginError;
+var fs = require('fs');
+var path = require('path');
+var exec = require('child_process').exec; //execFile fork
 //path
 var HOME_DIR = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
-var SDK_DIR = HOME_DIR + "dart/dart-sdk";
+var SDK_DIR = HOME_DIR + "/dart/dart-sdk";
+var DART2JS = path.normalize(
+                SDK_DIR + "/bin/dart2js");
+/*
 var DART2JS = path.normalize(
                 SDK_DIR + "/lib/_internal/compiler/implementation/dart2js.dart");
 var DART = path.normalize(
                 SDK_DIR + "/bin/dart");
 var SNAPSHOT = path.normalize(
                 SDK_DIR + "/bin/snapshots/dart2js.dart.snapshot");
-
+*/
 var DUMP = '.dump';
+var OUTPUT_FREFIX = '--out=';
+var INPUT_DIR = '.dump/in.dart';
+var OPTIONS = {
+    output: '',
+    check: '-c',
+    minify: '-m'
+};
 
-
-function loadOpt(arg) {
+function getConfig(args) {
     var DEFAULT = {
+        output: '.dump/out.js',
         check: false,
         minify: false
     };
-    var OPTIONS = {
-        inDir: ' .dump/in.dart',
-        outDir: ' --out=.dump/out.js',
-        check: ' -c',
-        minify: ' -m'
-    };
-    var opt = _.defaults(arg, DEFAULT);
+    var defOpt = _.cloneDeep(OPTIONS);
+    var opt = _.defaults(args || DEFAULT, DEFAULT);
 
-    if(!opt.check) delete OPTIONS.check;
-    if(!opt.minify) delete OPTIONS.minify;
+    var ext = '';
+    if(path.extname(opt.output) == '') ext = '.js';
+    defOpt.output = path.normalize(opt.output + ext);
+    if(!opt.check) delete defOpt.check;
+    if(!opt.minify) delete defOpt.minify;
 
-    return _.values(OPTIONS);
+    return defOpt;
 }
 
-module.exports = function (opt, config) {
-    var vmOpt;
-    var exOpt;
-    var uOpt = loadOpt(opt);
-    
+module.exports = function (opt, sdk) {
+    var config = getConfig(opt);
+    var t = _.cloneDeep(config);
+    t.output = OUTPUT_FREFIX.concat(t.output);
+    var uOpt = _.values(t);
+    var cmd = sdk || DART2JS;
+
     function transform(file, enc, cb) {
         if (file.isNull()) return cb(null, file); 
         if (file.isStream()) {
             return cb(new PluginError('dart2js-gulp', 'Streaming not supported'));
         }
-        
-        if(!fs.existsSync(DUMP)) fs.mkdirSync(DUMP);
-        fs.writeFileSync(uOpt.inDir, file.contents);
-        
-        var dest = gutil.replaceExtension(file.path, '.js')
 
-        fs.fstatSync(1, function(err, stats) {
-            if(!stats) {
-                exec('tput colors', function(err, stdout, stderr) {
-                    if(8 > stdout) exOpt += ('--enable-diagnostic-colors');
+        var dest = gutil.replaceExtension(file.path, '.js');
+        var baseCmd = new Array(cmd, INPUT_DIR);
+        var execCmd = baseCmd.concat(uOpt).join(' ');
+
+        fs.writeFile(INPUT_DIR, file.contents, function() {
+            exec(execCmd,
+                function(err, stdout, stderr) {
+                    if(!err) {
+                        fs.exists(config.output, function(exists) {
+                            if(exists) {
+                                fs.readFile(config.output, function(err, data) {
+                                    if(err) cb(new PluginError('dart2js-gulp', err));
+                                    file.contents = data;
+                                    stream.resume();
+                                });
+                            } else {
+                                stream.resume();
+                                cb(new PluginError('dart2js-gulp', 'dart2js export file not exsists.'));
+                            }
+                        });
+                    } else {
+                        stream.resume();
+                        cb(new PluginError('dart2js-gulp', err));
+                    }
+                }
+            );
+
+        });
+
+        var outDir = path.dirname(config.output);
+
+        fs.exists(outDir, function(exists) {
+            if(!exists){ 
+                mkdirp(outDir, function(err) {
+                    if(err) {
+                        stream.resume();
+                        cb(new PluginError('dart2js-gulp', err));
+                    }
                 });
             }
         });
 
-        vmOpt[vmOpt.length -1] = '--heap_growth_rate=512';
-
-        exec('$DART_VM_OPTIONS', function(err, stdout, stderr) {
-            if(stdout) vmOpt += stdout;
+        fs.exists(DUMP, function(exists) {
+            if(!exists) fs.mkdirSync(DUMP);
         });
-
-        exec(_.flatten(DART, vmOpt, DART2JS, exOpt, uOpt).join(" "),
-            function(err, stdout, stderr) {
-                if(!err) {
-                    fs.exists(args.outDir, function(exists) {
-                        if(exists) {
-                            fs.readFile(args.outDir, function(err, data) {
-                                gutil.log(gutil.colors.green('dart2js compiled.'));
-                                stream.resume();
-                            });
-                        } else {
-                            gutil.log(gutil.colors.red('Compiled file not exist.'));
-                            stream.resume();
-                        }
-                    });
-                } else {
-                    gutil.log('Compile error:', err.toString()));
-                    stream.resume();
-                }
-            }
-        );
 
         file.path = dest;
         return cb(null, file);
@@ -101,6 +119,25 @@ module.exports = function (opt, config) {
     stream.pause();
     return stream;
 };
+
+// vmOpt[vmOpt.length -1] = '--heap_growth_rate=512';
+
+/*
+exec('$DART_VM_OPTIONS', function(err, stdout, stderr) {
+    if(stdout) vmOpt += stdout;
+});
+
+*/
+
+/*
+fs.fstatSync(1, function(err, stats) {
+    if(!stats) {
+        exec('tput colors', function(err, stdout, stderr) {
+            if(8 > stdout) exOpt += ('--enable-diagnostic-colors');
+        });
+    }
+});
+*/
 
 /*
 command_self.conatain('/*_developer/') {

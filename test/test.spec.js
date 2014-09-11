@@ -1,11 +1,12 @@
 //jasmine-node test.spec.js
 
-var fs = require('fs'),
-    path = require('path'),
-    gutil = require('gulp-util'),
-    _ = require('lodash');
+var fs = require('fs');
+var path = require('path');
+var gutil = require('gulp-util');
+var plumber = require('gulp-plumber');
+var _ = require('lodash');
 
-expectData = {
+var expectData = {
 	timestamp : null,
     stamped : null,
     cleanup : function(dirpath) {
@@ -71,6 +72,29 @@ describe('dart2js', function() {
     });
 });
 
+xdescribe('dart2js configured sdk-path', function() {
+    var SDK_PATH = '/dart/dart-sdk/';
+    var dart = require('../');
+    var err;
+
+    beforeEach(function(done) {
+        expectData.cleanup('dart');
+        err = false;
+
+        dart(null, SDK_PATH)
+            .pipe(plumber())
+        	.on('error', function() {
+        		err = true;
+                done();
+            })
+            .write(expectData.make('dart/exist.dart'));
+    });
+
+    it('should compile dart file.', function() {
+        expect(err).toBeTruthy();
+    });
+});
+
 describe('dart2js configured sdk-path', function() {
     var SDK_PATH = '/dart/dart-sdk/';
     var dart = require('../');
@@ -81,11 +105,10 @@ describe('dart2js configured sdk-path', function() {
         err = false;
 
         dart(null, SDK_PATH)
-        	.on('error', function() {
-        		err = true;
+            .on('error', function() {
+                err = true;
                 done();
-            })
-            .write(expectData.make('dart/exist.dart'));
+            }).write(expectData.make('dart/exist.dart'))
     });
 
     it('should compile dart file.', function() {
@@ -146,5 +169,33 @@ describe('dart2js', function() {
 	        	.toMatch(expectData.timestamp);
         expect(act.toString())
 	        	.not.toMatch('END invoke');
+    });
+});
+
+describe('dart2js', function() {
+    var dart = require('../');
+    var options = {output: './.dump/dest/1/out.js'};
+    var act;
+
+    beforeEach(function(done) {
+        expectData.cleanup('dart');
+        act = null;
+
+        dart(options)
+            .on('error', function() {
+                done();
+            })
+            .on('data', function(f) {
+                fs.readFile('./.dump/dest/1/out.js', function(err, data) {
+                    act = data;
+                    done();
+                });
+            })
+            .write(expectData.make('dart/exist.dart'));
+    });
+
+    it('should compile dart file. (dest)', function() {
+        expect(act.toString())
+                .toMatch(expectData.timestamp);
     });
 });
