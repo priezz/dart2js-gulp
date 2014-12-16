@@ -38,6 +38,8 @@ function getConfig(args, tempDir) {
 		minify: false
 	};
 	var defOpt = _.cloneDeep(OPTIONS);
+	if (typeof(args) == "string")
+		args = JSON.parse(args);
 	var opt = _.defaults(args || DEFAULT, DEFAULT);
 
 	defOpt.output = '-o ' + path.normalize(tempDir + '/' + OUTFILE);
