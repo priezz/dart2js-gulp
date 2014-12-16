@@ -26,7 +26,7 @@ var SNAPSHOT = path.normalize(
 var TEMP = '.dump';
 // var OUTPUT_FREFIX = '--out=';
 var OPTIONS = {
-    output: '',
+    tempDir: '',
     check: '-c',
     minify: '-m'
 };
