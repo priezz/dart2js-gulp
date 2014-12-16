@@ -17,6 +17,7 @@ var HOME_DIR = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME
 var SDK_DIR = HOME_DIR + "/dart/dart-sdk";
 var DART2JS = path.normalize(
                 SDK_DIR + "/bin/dart2js");
+
 /*
 var SNAPSHOT = path.normalize(
                 SDK_DIR + "/bin/snapshots/dart2js.dart.snapshot");
