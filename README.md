@@ -1,6 +1,11 @@
 Dart2js Command Line Tool Wrapper for gulp. 
 If you want to use source-map when use output option.
 
+### Installation
+```
+npm install -g git+https://github.com/priezz/dart2js-gulp.git
+```
+
 ###Usage
 
 ```
@@ -21,7 +26,8 @@ gulp.task('dart', function() {
 dart({
   check: false,
   minify: false
-})
+},
+"/path/to/dart2js")
 ```
 ###chnage log
 ######(future) transfom other dependency .
