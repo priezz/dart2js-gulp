@@ -24,19 +24,19 @@ gulp.task('dart', function() {
 
 //default
 dart({
+  output: "/path/to/temporaty/dir"
   check: false,
   minify: false
 },
 "/path/to/dart2js")
 ```
 ###chnage log
-######(future) transfom other dependency .
+######0.0.6: improved README, changed input/output behavior
 ######0.0.5: fix error handring.
 ######0.0.5: Insert output option.
 			 => Changed source file output approach. 
 			(I tried to faster. but I don't understand. What exactly dart2js doing.)
 ######0.0.4: This is first usable commit.
-			(sorry.)
 
 ###The MIT License (MIT)
 
