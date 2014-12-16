@@ -22,9 +22,8 @@ var SNAPSHOT = path.normalize(
                 SDK_DIR + "/bin/snapshots/dart2js.dart.snapshot");
 */
 
-var DUMP = '.dump';
-var OUTPUT_FREFIX = '--out=';
-var INPUT_DIR = '.dump/in.dart';
+var TEMP = '.dump';
+// var OUTPUT_FREFIX = '--out=';
 var OPTIONS = {
     output: '',
     check: '-c',
@@ -33,7 +32,7 @@ var OPTIONS = {
 
 function getConfig(args) {
     var DEFAULT = {
-        output: '.dump/out.js',
+        tempDir: TEMP,
         check: false,
         minify: false
     };
@@ -41,8 +40,8 @@ function getConfig(args) {
     var opt = _.defaults(args || DEFAULT, DEFAULT);
 
     var ext = '';
-    if(path.extname(opt.output) == '') ext = '.js';
-    defOpt.output = path.normalize(opt.output + ext);
+//     if(path.extname(opt.output) == '') ext = '.js';
+//     defOpt.output = path.normalize(opt.output + ext);
     if(!opt.check) delete defOpt.check;
     if(!opt.minify) delete defOpt.minify;
 
@@ -52,7 +51,7 @@ function getConfig(args) {
 module.exports = function (opt, sdk) {
     var config = getConfig(opt);
     var t = _.cloneDeep(config);
-    t.output = OUTPUT_FREFIX.concat(t.output);
+//     t.output = OUTPUT_FREFIX.concat(t.output);
     var uOpt = _.values(t);
     var cmd = sdk || DART2JS;
 
@@ -63,12 +62,12 @@ module.exports = function (opt, sdk) {
         }
 
         var dest = gutil.replaceExtension(file.path, '.js');
+        var input = config.tempDir + '/in.dart';
+        var output = config.tempDir + '/out.js';
 
-        var outDir = path.dirname(config.output);
-
-        fs.exists(outDir, function(exists) {
+        fs.exists(config.tempDir, function(exists) {
             if(!exists){ 
-                mkdirp(outDir, function(err) {
+                mkdirp(config.tempDir, function(err) {
                     if(err) {
                         stream.resume();
                         cb(new PluginError('dart2js-gulp', err));
@@ -77,16 +76,16 @@ module.exports = function (opt, sdk) {
             }
         });
 
-        var baseCmd = new Array(cmd, outDir);
+        var baseCmd = new Array(cmd, input);
         var execCmd = baseCmd.concat(uOpt).join(' ');
 
-        fs.writeFile(outDir, file.contents, function() {
+        fs.writeFile(input, file.contents, function() {
             exec(execCmd,
                 function(err, stdout, stderr) {
                     if(!err) {
-                        fs.exists(config.output, function(exists) {
+                        fs.exists(output, function(exists) {
                             if(exists) {
-                                fs.readFile(config.output, function(err, data) {
+                                fs.readFile(output, function(err, data) {
                                     if(err) cb(new PluginError('dart2js-gulp', err));
                                     file.contents = data;
                                     stream.resume();
