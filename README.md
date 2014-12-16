@@ -24,11 +24,11 @@ gulp.task('dart', function() {
 
 //default
 dart({
-  tempDir: "/path/to/temporaty/dir"
   check: false,
   minify: false
 },
-"/path/to/dart2js")
+"/path/to/dart2js",
+"/path/to/temporaty/dir")
 ```
 ###chnage log
 ######0.0.6: improved README, changed input/output behavior
