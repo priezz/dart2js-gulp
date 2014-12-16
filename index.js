@@ -1,4 +1,4 @@
-// options 
+// options
 // output : '.dump/out.js'
 // check : false,
 // minify : false
@@ -24,94 +24,88 @@ var SNAPSHOT = path.normalize(
 */
 
 var TEMP = '.dump';
-// var OUTPUT_FREFIX = '--out=';
+var OUTFILE = 'out.js';
 var OPTIONS = {
-    tempDir: '',
-    check: '-c',
-    minify: '-m'
+output: '',
+check: '-c',
+minify: '-m'
 };
 
-function getConfig(args) {
-    var DEFAULT = {
-        tempDir: TEMP,
-        check: false,
-        minify: false
-    };
-    var defOpt = _.cloneDeep(OPTIONS);
-    var opt = _.defaults(args || DEFAULT, DEFAULT);
+function getConfig(args, tempDir) {
+	var DEFAULT = {
+		output: '',
+		check: false,
+		minify: false
+	};
+	var defOpt = _.cloneDeep(OPTIONS);
+	var opt = _.defaults(args || DEFAULT, DEFAULT);
 
-    var ext = '';
-//     if(path.extname(opt.output) == '') ext = '.js';
-//     defOpt.output = path.normalize(opt.output + ext);
-    if(!opt.check) delete defOpt.check;
-    if(!opt.minify) delete defOpt.minify;
+	defOpt.output = '-o ' + path.normalize(tempDir + '/' + OUTFILE);
+	if(!opt.check) delete defOpt.check;
+	if(!opt.minify) delete defOpt.minify;
 
-    return defOpt;
+	return defOpt;
 }
 
-module.exports = function (opt, sdk) {
-    var config = getConfig(opt);
-    var t = _.cloneDeep(config);
-//     t.output = OUTPUT_FREFIX.concat(t.output);
-    var uOpt = _.values(t);
-    var cmd = sdk || DART2JS;
+module.exports = function (opt, bin, tmp) {
+	var tempDir = tmp || TEMP;
+	var config = getConfig(opt, tempDir);
+	var uOpt = _.values( _.cloneDeep(config) );
+	var cmd = bin || DART2JS;
 
-    function transform(file, enc, cb) {
-        if (file.isNull()) return cb(null, file); 
-        if (file.isStream()) {
-            return cb(new PluginError('dart2js-gulp', 'Streaming not supported'));
-        }
+	function transform(file, enc, cb) {
+		if (file.isNull()) return cb(null, file);
+		if (file.isStream()) {
+			return cb(new PluginError('dart2js-gulp', 'Streaming not supported'));
+		}
 
-        var dest = gutil.replaceExtension(file.path, '.js');
-        var input = config.tempDir + '/in.dart';
-        var output = config.tempDir + '/out.js';
+		var dest = gutil.replaceExtension(file.path, '.js');
+		var input = file.path;
+		var output = path.normalize(tempDir + '/' + OUTFILE);
 
-        fs.exists(config.tempDir, function(exists) {
-            if(!exists){ 
-                mkdirp(config.tempDir, function(err) {
-                    if(err) {
-                        stream.resume();
-                        cb(new PluginError('dart2js-gulp', err));
-                    }
-                });
-            }
-        });
+		fs.exists(tempDir, function(exists) {
+			if(!exists){
+				mkdirp(tempDir, function(err) {
+					if(err) {
+						stream.resume();
+						cb(new PluginError('dart2js-gulp', err));
+					}
+				});
+			}
+		});
 
-        var baseCmd = new Array(cmd, input);
-        var execCmd = baseCmd.concat(uOpt).join(' ');
+		var baseCmd = new Array(cmd, input);
+		var execCmd = baseCmd.concat(uOpt).join(' ');
 
-        fs.writeFile(input, file.contents, function() {
-            exec(execCmd,
-                function(err, stdout, stderr) {
-                    if(!err) {
-                        fs.exists(output, function(exists) {
-                            if(exists) {
-                                fs.readFile(output, function(err, data) {
-                                    if(err) cb(new PluginError('dart2js-gulp', err));
-                                    file.contents = data;
-                                    stream.resume();
-                                });
-                            } else {
-                                stream.resume();
-                                cb(new PluginError('dart2js-gulp', 'dart2js export file not exsists.'));
-                            }
-                        });
-                    } else {
-                        stream.resume();
-                        cb(new PluginError('dart2js-gulp', err));
-                    }
-                }
-            );
+		exec(execCmd,
+		     function(err, stdout, stderr) {
+			     if(!err) {
+				     fs.exists(output, function(exists) {
+					     if(exists) {
+						     fs.readFile(output, function(err, data) {
+							     if(err) cb(new PluginError('dart2js-gulp', err));
+							     file.contents = data;
+							     stream.resume();
+						     });
+					     } else {
+						     stream.resume();
+						     cb(new PluginError('dart2js-gulp', 'dart2js export file not exsists.'));
+					     }
+				     });
+			     } else {
+				     stream.resume();
+				     cb(new PluginError('dart2js-gulp', err));
+			     }
+		     }
+		    );
 
-        });
+		file.path = dest;
+		return cb(null, file);
+	}
 
-        file.path = dest;
-        return cb(null, file);
-    }
-
-    var stream = through.obj(transform);
-    stream.pause();
-    return stream;
+	var stream = through.obj(transform);
+	stream.pause();
+	return stream;
 };
 
 // vmOpt[vmOpt.length -1] = '--heap_growth_rate=512';
