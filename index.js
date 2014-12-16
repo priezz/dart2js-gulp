@@ -76,7 +76,7 @@ module.exports = function (opt, bin, tmp) {
 			}
 		});
 
-		var baseCmd = new Array(cmd, '--disable-native-live-type-analysis --terse --suppress-hints --suppress-warnings ', input);
+		var baseCmd = new Array(cmd, '--disable-native-live-type-analysis --terse --suppress-hints --suppress-warnings --trust-type-annotations --trust-primitives -DDEBUG=true', input);
 		var execCmd = baseCmd.concat(uOpt).join(' ');
 
 		exec(execCmd,
