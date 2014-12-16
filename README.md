@@ -24,7 +24,7 @@ gulp.task('dart', function() {
 
 //default
 dart({
-  output: "/path/to/temporaty/dir"
+  tempDir: "/path/to/temporaty/dir"
   check: false,
   minify: false
 },
