@@ -76,7 +76,7 @@ module.exports = function (opt, bin, tmp) {
 			}
 		});
 
-		var baseCmd = new Array(cmd, input);
+		var baseCmd = new Array(cmd, '--disable-native-live-type-analysis --terse --suppress-hints --suppress-warnings ', input);
 		var execCmd = baseCmd.concat(uOpt).join(' ');
 
 		exec(execCmd,
