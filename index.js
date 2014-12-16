@@ -18,13 +18,10 @@ var SDK_DIR = HOME_DIR + "/dart/dart-sdk";
 var DART2JS = path.normalize(
                 SDK_DIR + "/bin/dart2js");
 /*
-var DART2JS = path.normalize(
-                SDK_DIR + "/lib/_internal/compiler/implementation/dart2js.dart");
-var DART = path.normalize(
-                SDK_DIR + "/bin/dart");
 var SNAPSHOT = path.normalize(
                 SDK_DIR + "/bin/snapshots/dart2js.dart.snapshot");
 */
+
 var DUMP = '.dump';
 var OUTPUT_FREFIX = '--out=';
 var INPUT_DIR = '.dump/in.dart';
@@ -66,10 +63,24 @@ module.exports = function (opt, sdk) {
         }
 
         var dest = gutil.replaceExtension(file.path, '.js');
-        var baseCmd = new Array(cmd, INPUT_DIR);
+
+        var outDir = path.dirname(config.output);
+
+        fs.exists(outDir, function(exists) {
+            if(!exists){ 
+                mkdirp(outDir, function(err) {
+                    if(err) {
+                        stream.resume();
+                        cb(new PluginError('dart2js-gulp', err));
+                    }
+                });
+            }
+        });
+
+        var baseCmd = new Array(cmd, outDir);
         var execCmd = baseCmd.concat(uOpt).join(' ');
 
-        fs.writeFile(INPUT_DIR, file.contents, function() {
+        fs.writeFile(outDir, file.contents, function() {
             exec(execCmd,
                 function(err, stdout, stderr) {
                     if(!err) {
@@ -92,23 +103,6 @@ module.exports = function (opt, sdk) {
                 }
             );
 
-        });
-
-        var outDir = path.dirname(config.output);
-
-        fs.exists(outDir, function(exists) {
-            if(!exists){ 
-                mkdirp(outDir, function(err) {
-                    if(err) {
-                        stream.resume();
-                        cb(new PluginError('dart2js-gulp', err));
-                    }
-                });
-            }
-        });
-
-        fs.exists(DUMP, function(exists) {
-            if(!exists) fs.mkdirSync(DUMP);
         });
 
         file.path = dest;
